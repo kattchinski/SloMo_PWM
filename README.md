@@ -1,9 +1,13 @@
 #RP2040 Adjustable PWM
 Pinout
 
+    GPIO2 - PWM IN
     GPIO3 - PWM IN
     GPIO4 - PWM IN
-    GPIO5 - PWM IN
+
+    GPIO6 - PWM IN
+    GPIO7 - PWM IN
+    GPIO8 - PWM IN
 Building firmware
 
     Install rustup by following the instructions at https://rustup.rs
