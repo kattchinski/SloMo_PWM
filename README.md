@@ -1,13 +1,13 @@
-#RP2040 Adjustable PWM
-##Pinout
+# RP2040 Adjustable PWM
+## Pinout
 
-    * GPIO2 - PWM IN
-    * GPIO3 - PWM IN
-    * GPIO4 - PWM IN
+* GPIO2 - PWM IN
+* GPIO3 - PWM IN
+* GPIO4 - PWM IN
 
-    * GPIO6 - PWM IN
-    * GPIO7 - PWM IN
-    * GPIO8 - PWM IN
+* GPIO6 - PWM IN
+* GPIO7 - PWM IN
+* GPIO8 - PWM IN
     
 ## Building firmware
 
