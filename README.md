@@ -5,9 +5,9 @@
 * GPIO3 - PWM IN
 * GPIO4 - PWM IN
 
-* GPIO6 - PWM IN
-* GPIO7 - PWM IN
-* GPIO8 - PWM IN
+* GPIO6 - PWM OUT
+* GPIO7 - PWM OUT
+* GPIO8 - PWM OUT
     
 ## Building firmware
 
