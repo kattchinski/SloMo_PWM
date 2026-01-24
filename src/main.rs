@@ -1,3 +1,13 @@
+// To change the behavior of this template, see the documentation:
+// Change min and max values to set the servo movement range
+// Change steps within 1 to 200 to regulate speed of servo movement
+// Change threshold value to set the PWM input level for servo direction change 
+
+
+
+
+
+
 // Говорим Rust: "Я пишу под микроконтроллер, тут нет стандартной библиотеки
 // (Vec, String, файлы, потоки и т.д.)"
 #![no_std]
