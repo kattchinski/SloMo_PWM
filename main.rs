@@ -3,23 +3,12 @@
 // Change steps within 1 to 200 to regulate speed of servo movement
 // Change threshold value to set the PWM input level for servo direction change 
 
-
-
-
-
-
-// Говорим Rust: "Я пишу под микроконтроллер, тут нет стандартной библиотеки
-// (Vec, String, файлы, потоки и т.д.)"
 #![no_std]
 
-// Говорим Rust: "У меня не будет обычной функции main(), как на ПК"
-// (RTIC + embedded runtime сами управляют стартом программы)
+
 #![no_main]
 
-// Подключаем panic handler.
-// Если в коде произойдет panic (unwrap, assert и т.п.),
-// будет корректная обработка для embedded-систем.
-// panic_probe обычно используется вместе с defmt для отладки.
+
 use panic_probe as _;
 
 
@@ -27,60 +16,42 @@ use panic_probe as _;
 //use defmt::*;
 
 
-
-// Импортируем макрос RTIC app — это фреймворк для задач и прерываний.
 use rtic::app;
 
-// rp2040-hal — библиотека для работы с периферией RP2040
-// (GPIO, PWM, UART, таймеры, тактирование и т.д.)
+
 use rp2040_hal as hal;
 
-// Импортируем нужные модули из hal
+
 use hal::{
-    // Функция инициализации тактирования:
-    // настраивает PLL, системную частоту, USB частоту и т.д.
     clocks::init_clocks_and_plls,
 
-    // FunctionPwm — режим пина "PWM выход"
-    // Pins — структура со всеми GPIO пинами
     gpio::{FunctionPwm,Pins},
 
-    // pac (Peripheral Access Crate) — низкоуровневый доступ к регистрам чипа
+    
     pac,
 
     pwm::Slices,
-    // Sio — доступ к GPIO банку (обязателен для Pins)
+  
     sio::Sio,
 
-    // Watchdog нужен для инициализации тактирования
     watchdog::Watchdog,
 };
 
 
 
 use embedded_hal::pwm::SetDutyCycle;
-// rtic_monotonics — модуль таймеров для RTIC.
-// prelude подтягивает millis(), secs() и т.п.
+
 use rtic_monotonics::rp2040::prelude::*;
 
-// ===== BOOT2 =====
-// RP2040 требует boot2 blob — маленький код,
-// который запускается первым и настраивает XIP flash.
-// Без него прошивка может не стартовать.
+
 #[link_section = ".boot2"] // кладем массив в специальную секцию памяти
 #[no_mangle]               // запрещаем переименование символа
 #[used]                    // запрещаем выкидывать как "неиспользуемый"
 pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_GENERIC_03H;
 
-// ===== MONOTONIC =====
-// Создаем RTIC monotonic таймер на базе TIMER RP2040.
-// Он позволяет использовать Mono::delay(100.millis()).await
 rp2040_timer_monotonic!(Mono);
 
-// ===== RTIC APP =====
-// Описываем RTIC-приложение.
-// device = pac — используем периферию из rp2040 PAC
-// peripherals = true — RTIC дает доступ к железу через ctx.device
+
 #[app(device = pac, peripherals = true)]
 mod app {
     // Подтягиваем все из внешнего модуля
@@ -88,7 +59,6 @@ mod app {
     use core::panic;
     // ===== Shared ресурсы =====
     // Shared — ресурсы, к которым могут обращаться разные задачи одновременно.
-    // В этом примере shared ресурсов нет, но структура обязательна.
     #[shared]
     struct Shared {
         pulse_width_us_1: u32,
@@ -98,7 +68,6 @@ mod app {
 
     // ===== Local ресурсы =====
     // Local — ресурсы, принадлежащие конкретной задаче.
-    // Здесь мы храним PWM slice (pwm0).
     #[local]
     struct Local {
         // Пин номер 2 вхід для PWM сигналу
@@ -114,39 +83,27 @@ mod app {
         pwm4: hal::pwm::Slice<hal::pwm::Pwm4, hal::pwm::FreeRunning>,   
     }
 
-    // ===== INIT =====
-    // init выполняется один раз при старте микроконтроллера.
-    // В RTIC 2.x init всегда возвращает (Shared, Local).
     #[init]
     fn init(ctx: init::Context) -> (Shared, Local) {
-        // Контроллер ресетов периферии.
-        // Его нужно передавать в инициализаторы GPIO, PWM и т.д.
         let mut resets = ctx.device.RESETS;
-
-        // Watchdog нужен для init_clocks_and_plls
         let mut watchdog = Watchdog::new(ctx.device.WATCHDOG);
 
-        // ===== ИНИЦИАЛИЗАЦИЯ ТАКТИРОВАНИЯ =====
-        // 12_000_000 — частота кварца (обычно 12 МГц на Pico)
         init_clocks_and_plls(
-            12_000_000,          // частота кварца
-            ctx.device.XOSC,     // внешний осциллятор
-            ctx.device.CLOCKS,   // блок управления тактированием
-            ctx.device.PLL_SYS,  // PLL системной частоты
-            ctx.device.PLL_USB,  // PLL USB
+            12_000_000,          
+            ctx.device.XOSC,     
+            ctx.device.CLOCKS,   
+            ctx.device.PLL_SYS,  
+            ctx.device.PLL_USB,  
             &mut resets,
             &mut watchdog,
         )
         .ok()
         .unwrap();
 
-        // ===== ЗАПУСК MONOTONIC =====
-        // КРИТИЧЕСКИ ВАЖНО:
-        // без этого Mono::delay().await будет ждать бесконечно.
+
         Mono::start(ctx.device.TIMER, &mut resets);
 
-        // ===== GPIO =====
-        // Sio нужен для работы с GPIO банком
+
         let sio = Sio::new(ctx.device.SIO);
 
         // Создаем структуру pins.gpio0, pins.gpio1 и т.д.
